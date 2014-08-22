@@ -104,7 +104,6 @@ define({
 						option_state.chosen.node.setAttribute("class", define.class_name.branch_text_option_wrap )
 						option_state.chosen.node.children[0].setAttribute("class", define.class_name.branch_text_option )
 						option_state.chosen.node.parentElement.children[1].style.display = "none"
-						option_state.chosen.node.parentElement.children[2].style.display = "none"
 					}
 
 					if ( node !== option_state.chosen.node ) { 
@@ -113,7 +112,6 @@ define({
 						node.children[0].setAttribute("class", define.class_name.branch_text_option_active)
 
 						node.parentElement.children[1].style.display = "block"
-						node.parentElement.children[2].style.display = "block"
 						option_state.chosen.node                     = node
 						option_state.chosen.value                    = node.getAttribute("data-option-value")
 
@@ -122,7 +120,6 @@ define({
 						node.setAttribute("class", define.class_name.branch_text_option_wrap )
 						node.children[0].setAttribute("class", define.class_name.branch_text_option )
 						option_state.chosen.node.parentElement.children[1].style.display = "none"
-						option_state.chosen.node.parentElement.children[2].style.display = "none"
 						option_state.chosen.node                                         = false
 						option_state.chosen.value                                        = ""
 					}
@@ -191,6 +188,7 @@ define({
 					"child"   : this.define_call_option_tree_body({
 						name       : define.name,
 						tree       : define.with.tree,
+						button     : define.with.button,
 						parent     : [],
 						class_name : define.class_name
 					})
@@ -215,13 +213,15 @@ define({
 								name       : define.name,
 								define     : member,
 								parent     : define.parent,
-								class_name : define.class_name
+								class_name : define.class_name,
+								button     : define.button
 							}) : 
 							self.define_tree_branch_option_text({
 								define     : member,
 								name       : define.name,
 								parent     : define.parent,
-								class_name : define.class_name
+								class_name : define.class_name,
+								button     : define.button
 							})
 					)
 				}
@@ -248,18 +248,13 @@ define({
 				]
 			},
 			{
-				"display"          : "none",
-				"class"            : branch.class_name.branch_text_option_button,
-				"data-tree-submit" : "submit",
-				"data-name"        : branch.name,
-				"text"             : "Submit",
-			},
-			{
-				"display"          : "none",
-				"class"            : branch.class_name.branch_text_option_button,
-				"data-name"        : branch.name,
-				"data-tree-submit" : "gone the extra mile?",
-				"text"             : "Gone The Extra Mile?",
+				"class"   : branch.class_name.branch_text_option_button_wrap,
+				"display" : "none",
+				"child"   : this.define_button({
+					button     : branch.button,
+					class_name : branch.class_name,
+					name       : branch.name
+				})
 			}
 		]
 	},
@@ -288,7 +283,8 @@ define({
 					name       : branch.name,
 					tree       : branch.define.value,
 					parent     : branch.parent.concat( branch.define.property_name ),
-					class_name : branch.class_name
+					class_name : branch.class_name,
+					button     : branch.button
 				})
 			}
 		]
@@ -325,22 +321,27 @@ define({
 				},
 				{
 					"class" : define.class_name.result_button_wrap,
-					child   : [
-						{
-							"class"            : define.class_name.result_button,
-							"data-tree-submit" : "submit",
-							"data-name"        : define.name,
-							"text"             : "Submit"
-						},
-						{
-							"class"            : define.class_name.result_button,
-							"data-tree-submit" : "gone the extra mile?",
-							"data-name"        : define.name,
-							"text"             : "Gone The Extra Mile?"
-						}
-					]
+					"child" : this.define_button({
+						button     : define.with.button,
+						class_name : define.class_name,
+						name       : define.name
+					})
 				}
 			]
 		}
+	},
+
+	define_button : function ( define ) { 
+		return this.library.morphism.index_loop({
+			array   : define.button,
+			else_do : function ( loop ) {
+				return loop.into.concat({
+					"class"            : define.class_name.result_button,
+					"data-tree-submit" : loop.indexed,
+					"data-name"        : define.name,
+					"text"             : loop.indexed
+				})
+			}
+		})
 	}
 })
