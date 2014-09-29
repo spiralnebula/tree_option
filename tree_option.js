@@ -143,7 +143,7 @@ define({
 							option_state.chosen.node.getAttribute("data-option-path") :
 							""
 					)
-					option_state.body.result.get("result name").body.textContent = option_state.chosen.value
+					option_state.body.result.get("result name").body.textContent = option_state.chosen.value || "Nothing"
 					option_state.body.result.get("result path").body.textContent = option_path
 					option_state.chosen.path                                     = option_path.split(" -> ").concat(option_state.chosen.value).join(":")
 					return heard
@@ -185,12 +185,12 @@ define({
 				{
 					"mark_as" : "tree",
 					"class"   : define.class_name.tree_wrap,
-					"child"   : this.define_call_option_tree_body({
+					"child"   : this.define_tree_branch_text({
 						name       : define.name,
-						tree       : define.with.tree,
-						button     : define.with.button,
+						define     : define.with.tree,
+						class_name : define.class_name,
 						parent     : [],
-						class_name : define.class_name
+						button     : define.with.button	
 					})
 				}
 			].concat(
@@ -200,31 +200,70 @@ define({
 	},
 
 	define_call_option_tree_body : function ( define ) {
+
 		var self = this
+
+		return this.library.morphism.homomorph({
+			object : define.tree.child,
+			set    : "array",
+			with   : function ( member ) {
+				if ( member.value.child ) { 
+					return { 
+						"class" : define.class_name.branch,
+						"child" : self.define_tree_branch_text({
+							name       : define.name,
+							define     : member.value,
+							parent     : define.parent,
+							class_name : define.class_name,
+							button     : define.button
+						}) 
+					}
+				} else {
+					return { 
+						"class" : define.class_name.branch,
+						"child" : self.define_tree_branch_option_text({
+							define     : member.value,
+							name       : define.name,
+							parent     : define.parent,
+							class_name : define.class_name,
+							button     : define.button
+						})
+					}
+				}
+			}
+		})
+
 		return this.library.morphism.homomorph({
 			object : define.tree,
 			set    : "array",
 			with   : function ( member ) {
-				return {
-					"class" : define.class_name.branch,
-					"child" : (
-						typeof member.value === "object" ?
-							self.define_tree_branch_text({
-								name       : define.name,
-								define     : member,
-								parent     : define.parent,
-								class_name : define.class_name,
-								button     : define.button
-							}) : 
-							self.define_tree_branch_option_text({
-								define     : member,
-								name       : define.name,
-								parent     : define.parent,
-								class_name : define.class_name,
-								button     : define.button
-							})
-					)
-				}
+				return self.define_tree_branch_option_text({
+					define     : member,
+					name       : define.name,
+					parent     : define.parent,
+					class_name : define.class_name,
+					button     : define.button
+				})
+				// return {
+				// 	"class" : define.class_name.branch,
+				// 	"child" : (
+				// 		typeof member.value === "object" ?
+				// 			self.define_tree_branch_text({
+				// 				name       : define.name,
+				// 				define     : member,
+				// 				parent     : define.parent,
+				// 				class_name : define.class_name,
+				// 				button     : define.button
+				// 			}) : 
+				// 			self.define_tree_branch_option_text({
+				// 				define     : member,
+				// 				name       : define.name,
+				// 				parent     : define.parent,
+				// 				class_name : define.class_name,
+				// 				button     : define.button
+				// 			})
+				// 	)
+				// }
 			}
 		})
 	},
@@ -234,7 +273,7 @@ define({
 			{
 				"class"             : branch.class_name.branch_text_option_wrap,
 				"data-tree-option"  : branch.name,
-				"data-option-value" : branch.define.property_name,
+				"data-option-value" : branch.define.text,
 				"data-option-path"  : branch.parent.join(" -> "),
 				"data-name"         : branch.name,
 				"child"             : [
@@ -243,7 +282,7 @@ define({
 					},
 					{
 						"class" : branch.class_name.branch_text,
-						"text"  : branch.define.property_name
+						"text"  : branch.define.text
 					},
 				]
 			},
@@ -271,7 +310,7 @@ define({
 					},
 					{
 						"class" : branch.class_name.branch_text,
-						"text"  : branch.define.property_name
+						"text"  : branch.define.text
 					},
 				]
 			},
@@ -279,10 +318,10 @@ define({
 				"display"    : "none",
 				"class"      : branch.class_name.branch_children,
 				"data-state" : "closed",
-				child        : this.define_call_option_tree_body({
+				"child"      : this.define_call_option_tree_body({
 					name       : branch.name,
-					tree       : branch.define.value,
-					parent     : branch.parent.concat( branch.define.property_name ),
+					tree       : branch.define,
+					parent     : branch.parent.concat( branch.define.text ),
 					class_name : branch.class_name,
 					button     : branch.button
 				})
