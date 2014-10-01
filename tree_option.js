@@ -185,11 +185,11 @@ define({
 				{
 					"mark_as" : "tree",
 					"class"   : define.class_name.tree_wrap,
-					"child"   : this.define_tree_branch_text({
+					"child"   : this.define_call_option_tree_body({
 						name       : define.name,
-						define     : define.with.tree,
-						class_name : define.class_name,
+						tree       : define.with.tree,
 						parent     : [],
+						class_name : define.class_name,
 						button     : define.with.button	
 					})
 				}
@@ -244,26 +244,6 @@ define({
 					class_name : define.class_name,
 					button     : define.button
 				})
-				// return {
-				// 	"class" : define.class_name.branch,
-				// 	"child" : (
-				// 		typeof member.value === "object" ?
-				// 			self.define_tree_branch_text({
-				// 				name       : define.name,
-				// 				define     : member,
-				// 				parent     : define.parent,
-				// 				class_name : define.class_name,
-				// 				button     : define.button
-				// 			}) : 
-				// 			self.define_tree_branch_option_text({
-				// 				define     : member,
-				// 				name       : define.name,
-				// 				parent     : define.parent,
-				// 				class_name : define.class_name,
-				// 				button     : define.button
-				// 			})
-				// 	)
-				// }
 			}
 		})
 	},
