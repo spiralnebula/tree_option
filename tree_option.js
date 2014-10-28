@@ -10,7 +10,7 @@ define({
 	},
 
 	make : function ( define ) {
-		console.log( this.library )
+
 		var tree_option_body, event_circle
 		
 		tree_option_body = this.library.transistor.make(
@@ -42,6 +42,10 @@ define({
 		return {
 			body      : define.body.body,
 			append    : define.body.append,
+			set_state : function ( state ) {
+				define.event_master.set_state( state )
+				return true
+			},
 			get_state : function () { 
 				return define.event_master.get_state()
 			},
@@ -141,9 +145,7 @@ define({
 					if ( heard.state.chosen.node !== false ) { 
 						branch_node               = heard.state.chosen.node
 						button_node               = branch_node.nextSibling
-						heard.state.value         = { 
-
-						}
+						heard.state.value         = {}
 						heard.state.chosen.node   = false
 						button_node.style.display = "none"
 						branch_node.setAttribute("class", define.class_name.branch_text_option_wrap )
@@ -180,7 +182,8 @@ define({
 						in_context   : heard.event.target.getAttribute("data-tree-submit"),
 						option_state : option_state,
 						state        : heard.state,
-						event        : heard.event
+						event        : heard.event,
+						remake       : heard.state.remake || {}
 					})
 
 					return heard
