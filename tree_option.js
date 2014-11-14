@@ -10,7 +10,7 @@ define({
 	},
 
 	make : function ( define ) {
-
+		
 		var tree_option_body, event_circle
 		
 		tree_option_body = this.library.transistor.make(
@@ -68,12 +68,11 @@ define({
 	define_state : function ( define ) {
 		return {
 			body   : {
-				tree   : define.body.get("tree"),
-				result : define.body.get("result")
+				tree   : define.body.get("tree")
 			},
 			chosen : {
 				node   : false,
-				submit : define.with.submit
+				submit : define.with.submit || function () {}
 			},
 			value  : { 
 				path : "",
@@ -86,18 +85,6 @@ define({
 		return [
 			{
 				called : "reset"
-			},
-			{ 
-				called       : "tree option result button click",
-				that_happens : [
-					{ 
-						on : define.body.body,
-						is : [ "click" ]
-					}
-				],
-				only_if : function ( heard ) {
-					return ( heard.event.target.getAttribute( "data-tree-submit" ) )
-				}
 			},
 			{
 				called       : "tree option button click",
@@ -139,51 +126,31 @@ define({
 				for       : "reset",
 				that_does : function ( heard ) {
 
-					var branch_node, button_node, closed_nodes, option_state
+					var branch_node, closed_nodes, option_state
 
 					option_state = heard.state
-					if ( heard.state.chosen.node !== false ) { 
+
+					if ( heard.state.chosen.node !== false ) {
+
 						branch_node               = heard.state.chosen.node
-						button_node               = branch_node.nextSibling
 						heard.state.value         = {}
 						heard.state.chosen.node   = false
-						button_node.style.display = "none"
 						branch_node.setAttribute("class", define.class_name.branch_text_option_wrap )
 						branch_node.firstChild.setAttribute("class", define.class_name.branch_text_option )
 					}
 
 					closed_nodes = self.library.morph.index_loop({
 						subject : self.get_node_of_every_open_branch({
-							tree : heard.state.body.tree.body.children
+							tree : heard.state.body.tree.body.children[1].children
 						}),
-						else_do : function ( loop ) { 
+						else_do : function ( loop ) {
+
 							loop.indexed.previousSibling.firstChild.textContent = "-"
-							loop.indexed.style.display              = "none"
+							loop.indexed.previousSibling.setAttribute("class", define.class_name.branch_text_wrap )
+							loop.indexed.style.display                          = "none"
 							loop.indexed.setAttribute("data-state", "closed")
 							return loop.into.concat( loop.indexed )
 						}
-					})
-
-					option_state.body.result.get("result name").body.textContent = "Nothing"
-					option_state.body.result.get("result path").body.textContent = ""
-
-					return heard
-				}
-			},
-			{ 
-				for       : "tree option result button click",
-				that_does : function ( heard ) {
-
-					var option_state, name
-
-					name         = heard.event.target.getAttribute("data-name")
-					option_state = heard.state
-					option_state.chosen.submit.call({}, {
-						in_context   : heard.event.target.getAttribute("data-tree-submit"),
-						option_state : option_state,
-						state        : heard.state,
-						event        : heard.event,
-						remake       : heard.state.remake || {}
 					})
 
 					return heard
@@ -202,30 +169,26 @@ define({
 					name         = node.getAttribute("data-name")
 					option_state = heard.state
 
+
 					if ( option_state.chosen.node !== false ) {
 
 						option_state.chosen.node.setAttribute("class", define.class_name.branch_text_option_wrap )
 						option_state.chosen.node.children[0].setAttribute("class", define.class_name.branch_text_option )
-						option_state.chosen.node.parentElement.children[1].style.display = "none"
 					}
 
 					if ( node !== option_state.chosen.node ) { 
 
 						node.setAttribute("class", define.class_name.branch_text_option_wrap_active)
 						node.children[0].setAttribute("class", define.class_name.branch_text_option_active)
-
-						node.parentElement.children[1].style.display = "block"
-						option_state.chosen.node                     = node
-						option_state.value.text                      = node.getAttribute("data-option-value")
+						option_state.chosen.node = node
+						option_state.value.text  = node.getAttribute("data-option-value")
 
 					} else { 
 
 						node.setAttribute("class", define.class_name.branch_text_option_wrap )
 						node.children[0].setAttribute("class", define.class_name.branch_text_option )
-
-						option_state.chosen.node.parentElement.children[1].style.display = "none"
-						option_state.chosen.node                                         = false
-						option_state.value.text                                          = ""
+						option_state.chosen.node = false
+						option_state.value.text  = ""
 					}
 
 					return heard
@@ -247,9 +210,8 @@ define({
 							option_state.chosen.node.getAttribute("data-option-path") :
 							""
 					)
-					option_state.body.result.get("result name").body.textContent = option_state.value.text || "Nothing"
-					option_state.body.result.get("result path").body.textContent = option_path
-					option_state.value.path                                      = option_path.split(" -> ").concat(option_state.chosen.value).join(":")
+					
+					option_state.value.path = option_path.split(" -> ").concat(option_state.chosen.value).join(":")
 
 					return heard
 				}
@@ -289,18 +251,21 @@ define({
 			subject : get.tree,
 			into    : get.into || [],
 			else_do : function ( loop ) {
+
 				if ( loop.indexed.firstChild.hasAttribute("data-branch") ) {
 
 					var branch_wrap_node
 					branch_wrap_node = loop.indexed.lastChild
 
 					if ( branch_wrap_node.getAttribute("data-state") === "open" ) {
-						loop.into        = loop.into.concat( branch_wrap_node )
+						loop.into = loop.into.concat( branch_wrap_node )
 					}
 
-					return loop.into.concat(self.get_node_of_every_open_branch({
-						tree : branch_wrap_node.children
-					}))
+					return loop.into.concat(
+						self.get_node_of_every_open_branch({
+							tree : branch_wrap_node.children
+						})
+					)
 
 				} else { 
 					return loop.into
@@ -310,23 +275,26 @@ define({
 	},
 
 	define_body : function ( define ) {
+		
 		return {
 			"class"   : define.class_name.wrap,
 			"child"   : [
 				{
 					"mark_as" : "tree",
 					"class"   : define.class_name.tree_wrap,
-					"child"   : this.define_call_option_tree_body({
-						name       : define.name,
-						tree       : define.with.tree,
-						parent     : [],
+					"child"   : this.define_tree_branch_text({
+						define     : define.with.tree,
 						class_name : define.class_name,
-						button     : define.with.button	
-					})
+						parent     : []
+					}),
+					// "child"   : this.define_call_option_tree_body({
+					// 	name       : define.name,
+					// 	tree       : define.with.tree,
+					// 	parent     : [],
+					// 	class_name : define.class_name
+					// })
 				}
-			].concat(
-				this.define_call_option_tree_result( define )
-			)
+			]
 		}
 	},
 
@@ -344,8 +312,8 @@ define({
 							"class" : define.class_name.branch,
 							"child" : self.define_tree_branch_text({
 								define     : loop.value,
-								parent     : define.parent,
 								class_name : define.class_name,
+								parent     : define.parent,
 								button     : define.button
 							}) 
 						})
@@ -354,7 +322,7 @@ define({
 					return {
 						into : loop.into.concat({ 
 							"class" : define.class_name.branch,
-							"child" : self.define_tree_branch_option_text({
+							"child" : self.define_tree_branch_option_text_and_button({
 								define     : loop.value,
 								parent     : define.parent,
 								class_name : define.class_name,
@@ -372,7 +340,7 @@ define({
 			else_do : function ( loop ) {
 				return {
 					into : loop.into.concat(
-						self.define_tree_branch_option_text({
+						self.define_tree_branch_option_text_and_button({
 							define     : loop,
 							name       : define.name,
 							parent     : define.parent,
@@ -385,33 +353,38 @@ define({
 		})
 	},
 
-	define_tree_branch_option_text : function ( branch ) {
+	define_tree_branch_option_text_and_button : function ( branch ) {
+		
 		return [
-			{
-				"class"             : branch.class_name.branch_text_option_wrap,
-				"data-tree-option"  : "true",
-				"data-option-value" : branch.define.text,
-				"data-option-path"  : branch.parent.join(" -> "),
-				"data-name"         : branch.name,
-				"child"             : [
-					{
-						"class" : branch.class_name.branch_text_option
-					},
-					{
-						"class" : branch.class_name.branch_text,
-						"text"  : branch.define.text
-					},
-				]
-			},
-			{
-				"class"   : branch.class_name.branch_text_option_button_wrap,
-				"display" : "none",
-				"child"   : this.define_button({
-					button     : branch.button,
-					class_name : branch.class_name,
-					name       : branch.name
-				})
-			}
+			this.library.morph.object_loop({
+				"subject" : branch.define,
+				"into?"   : {
+					"class"             : branch.class_name.branch_text_option_wrap,
+					"data-tree-option"  : "true",
+					"data-option-value" : branch.define.text,
+					"data-option-path"  : branch.parent.join(" -> "),
+					"child"             : [
+						{
+							"class" : branch.class_name.branch_text_option
+						},
+						{
+							"class" : branch.class_name.branch_text,
+							"text"  : branch.define.text
+						},
+					]
+				},
+				"if_done?" : function ( loop ) { 
+					return loop.into
+				},
+				else_do : function ( loop ) {
+					
+					if ( loop.key !== "text" ) { 
+						loop.into["data-"+loop.key] = loop.value
+					}
+
+					return loop.into
+				}
+			})
 		]
 	},
 
@@ -447,6 +420,7 @@ define({
 	},
 
 	define_call_option_tree_result : function ( define ) {
+
 		return { 
 			"class"   : define.class_name.result_wrap,
 			"mark_as" : "result",
@@ -474,30 +448,29 @@ define({
 							"text"    : ""
 						},
 					]	
-				},
-				{
-					"class" : define.class_name.result_button_wrap,
-					"child" : this.define_button({
-						button     : define.with.button,
-						class_name : define.class_name,
-						name       : define.name
-					})
 				}
 			]
 		}
 	},
 
-	define_button : function ( define ) { 
-		return this.library.morph.index_loop({
-			subject : define.button,
-			else_do : function ( loop ) {
-				return loop.into.concat({
-					"class"            : define.class_name.result_button,
-					"data-tree-submit" : loop.indexed,
-					"data-name"        : define.name,
-					"text"             : loop.indexed
+	get_data_type_attribute_valuee_from_node : function ( node ) {
+
+		var node_attributes = {}
+		for ( var attribute in node.attributes ) {
+
+			if ( !isNaN( attribute ) && node.attributes[attribute].name.match("data-") !== null ) {
+
+				var attribute_name = node.attributes[attribute].name.replace(/(data-|-)/g, function ( match ) { 
+					if ( match === "data-" ) { 
+						return ""
+					}
+					if ( match === "-" ) { 
+						return "_"
+					}
 				})
+				node_attributes[attribute_name] = node.attributes[attribute].value
 			}
-		})
+		}
+		return node_attributes
 	}
 })
